@@ -86,7 +86,7 @@ abstract class AbstractImage implements ImageInterface, ClassFactoryAwareInterfa
                 $thumbnail->crop(
                     new Point(
                         max(0, round(($imageSize->getWidth() - $size->getWidth()) / 2)),
-                        max(0, round(($imageSize->getHeight() - $size->getHeight()) / 2))
+                        0
                     ),
                     $thumbnailSize
                 );
