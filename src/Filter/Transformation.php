@@ -135,9 +135,9 @@ final class Transformation implements FilterInterface, ManipulatorInterface
      *
      * @see \Imagine\Image\ManipulatorInterface::crop()
      */
-    public function crop(PointInterface $start, BoxInterface $size)
+    public function crop(PointInterface $start, BoxInterface $size, $border = false)
     {
-        return $this->add(new Crop($start, $size));
+        return $this->add(new Crop($start, $size, $border));
     }
 
     /**
@@ -245,9 +245,9 @@ final class Transformation implements FilterInterface, ManipulatorInterface
      *
      * @see \Imagine\Image\ManipulatorInterface::thumbnail()
      */
-    public function thumbnail(BoxInterface $size, $settings = ImageInterface::THUMBNAIL_INSET, $filter = ImageInterface::FILTER_UNDEFINED)
+    public function thumbnail(BoxInterface $size, $settings = ImageInterface::THUMBNAIL_INSET, $filter = ImageInterface::FILTER_UNDEFINED, $border = false)
     {
-        return $this->add(new Thumbnail($size, $settings, $filter));
+        return $this->add(new Thumbnail($size, $settings, $filter, $border));
     }
 
     /**
