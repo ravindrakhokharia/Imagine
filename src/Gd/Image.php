@@ -119,7 +119,7 @@ final class Image extends AbstractImage
      *
      * @see \Imagine\Image\ManipulatorInterface::crop()
      */
-    final public function crop(PointInterface $start, BoxInterface $size)
+    final public function crop(PointInterface $start, BoxInterface $size, $border = false)
     {
         if (!$start->in($this->getSize())) {
             throw new OutOfBoundsException('Crop coordinates must start at minimum 0, 0 position from top left corner, crop height and width must be positive integers and must not exceed the current image borders');
@@ -134,12 +134,69 @@ final class Image extends AbstractImage
             imagedestroy($dest);
             throw new RuntimeException('Image crop operation failed');
         }
-
+        if($border){
+            $dest = $this->putBorder($dest, 10, $width, $height);
+            $mi = imagecreatetruecolor($width+6, $height+6);
+            $transparent = imagecolorallocate($mi, 186, 191, 197);
+            imagefill($mi, 0, 0, $transparent);
+            imagecopy($mi, $dest, 3,3,0,0, $width, $height);
+            $dest = $mi;
+            $dest = $this->putBorder($dest, 10, $width+6, $height+6);
+        }
         imagedestroy($this->resource);
 
         $this->resource = $dest;
 
         return $this;
+    }
+
+    public function putBorder($src, $radius, $w, $h){
+            $q = 10; # change this if you want
+            $radius *= $q;
+
+            # find unique color
+            do {
+                $r = rand(0, 255);
+                $g = rand(0, 255);
+                $b = rand(0, 255);
+            }
+            while (imagecolorexact($src, $r, $g, $b) < 0);
+
+            $nw = $w*$q;
+            $nh = $h*$q;
+
+            $img = imagecreatetruecolor($nw, $nh);
+            $alphacolor = imagecolorallocatealpha($img, $r, $g, $b, 127);
+            imagealphablending($img, false);
+            imagesavealpha($img, true);
+            imagefilledrectangle($img, 0, 0, $nw, $nh, $alphacolor);
+
+            imagefill($img, 0, 0, $alphacolor);
+            imagecopyresampled($img, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+            imagearc($img, $radius-1, $radius-1, $radius*2, $radius*2, 180, 270, $alphacolor);
+            imagefilltoborder($img, 0, 0, $alphacolor, $alphacolor);
+            imagearc($img, $nw-$radius, $radius-1, $radius*2, $radius*2, 270, 0, $alphacolor);
+            imagefilltoborder($img, $nw-1, 0, $alphacolor, $alphacolor);
+            imagearc($img, $radius-1, $nh-$radius, $radius*2, $radius*2, 90, 180, $alphacolor);
+            imagefilltoborder($img, 0, $nh-1, $alphacolor, $alphacolor);
+            imagearc($img, $nw-$radius, $nh-$radius, $radius*2, $radius*2, 0, 90, $alphacolor);
+            imagefilltoborder($img, $nw-1, $nh-1, $alphacolor, $alphacolor);
+            imagealphablending($img, true);
+            imagecolortransparent($img, $alphacolor);
+
+            # resize image down
+            $dest = imagecreatetruecolor($w, $h);
+            imagealphablending($dest, false);
+            imagesavealpha($dest, true);
+            imagefilledrectangle($dest, 0, 0, $w, $h, $alphacolor);
+            imagecopyresampled($dest, $img, 0, 0, 0, 0, $w, $h, $nw, $nh);
+
+            # output image
+            $res = $dest;
+            imagedestroy($src);
+            imagedestroy($img);
+            return $res;
     }
 
     /**
